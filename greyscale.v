@@ -13,8 +13,8 @@ module system_top (
   output wire [31:0] reg_data2_out,
   output wire [31:0] read_data_out,
   output wire [31:0] address_out,
-    output wire [7:0]  final_grayscale,
-    output wire done,
+  output wire [7:0]  final_grayscale,
+  output wire done,
   output reg [31:0] register2,
   output reg [31:0] register3,
   output reg [31:0] register4,
@@ -36,15 +36,14 @@ module system_top (
 );
 
   reg [31:0] register_2, register_3, register_4, register_5,register_9;//not req
-   reg [23:0] rgb_pixel;
-    wire [23:0] rgb_to_ipu_wire;
+  reg [23:0] rgb_pixel;
+  wire [23:0] rgb_to_ipu_wire;
   reg  [6:0]  rgb_index;
-    wire [7:0]  gray_ipu;
-    wire [7:0]  gray_bus;
-    wire        done_signal;
-    reg         load_pixel, store_pixel;
-// Declare grayscale storage registers
-  reg [31:0] grayscale_9, grayscale_10, grayscale_11, grayscale_12;//not req
+  wire [7:0]  gray_ipu;
+  wire [7:0]  gray_bus;
+  wire        done_signal;
+  reg         load_pixel, store_pixel;
+  reg [31:0] grayscale_9, grayscale_10, grayscale_11, grayscale_12; //not required
   reg [31:0] grayscale_array [0:63]; 
 
 
@@ -52,26 +51,26 @@ module system_top (
     
   
     mips_top1 mips_core (
-        .clk(clk),
-        .reset(reset),
-      .grayscale_flat_out(grayscale_flat_out),
-        .ext_data_9(grayscale_9),
-        .ext_data_10(grayscale_10),
-        .ext_data_11(grayscale_11),
-        .ext_data_12(grayscale_12),
-        .out(mips_out),
-        .reg_data1_out(reg_data1_out),
-        .reg_data2_out(reg_data2_out),
-        .read_data_out(read_data_out),
-        .address_out(address_out),
-        .instruction_out(instruction_out),
-        .register_2(register_2),
-        .register_3(register_3),
-        .register_4(register_4),
-      .register_5(register_5),
-      .register_9(register_9),
-      .array(array),
-      .flat_mem_data_out(flat_mem_data_out)
+      .clk(clk),
+      .reset(reset),
+      .grayscale_flat_out(grayscale_flat_out), 
+	    .ext_data_9(grayscale_9), //not neccessary
+	    .ext_data_10(grayscale_10), //not neccessary
+	    .ext_data_11(grayscale_11), //not neccessary
+	    .ext_data_12(grayscale_12), //not neccessary
+	    .out(mips_out), //not neccessary
+	    .reg_data1_out(reg_data1_out), //not neccessary
+	    .reg_data2_out(reg_data2_out), //not neccessary
+	    .read_data_out(read_data_out), //not neccessary
+	    .address_out(address_out), //not neccessary
+	    .instruction_out(instruction_out), //not neccessary
+	    .register_2(register_2),//not neccessary
+	    .register_3(register_3), //not neccessary
+	    .register_4(register_4), //not neccessary
+	    .register_5(register_5), //not neccessary
+	    .register_9(register_9), //not neccessary
+       .array(array), 
+       .flat_mem_data_out(flat_mem_data_out)
       
     );
     
@@ -122,7 +121,7 @@ module system_top (
                 end
                 3: begin
                     store_pixel <= 0;
-                  if (rgb_index < 64) begin                          //change here
+			if (rgb_index < 64) begin                          //change here for changing pixels
                         rgb_index <= rgb_index + 1;
                         cycle <= 0;
                     end else begin
@@ -132,6 +131,10 @@ module system_top (
             endcase
         end
     end
+
+	always @(*) begin
+	 rgb_pixel = array[(rgb_index)*32 +: 24];
+end
  integer i;
 
 always @(posedge clk or posedge reset) begin
@@ -144,9 +147,7 @@ always @(posedge clk or posedge reset) begin
     end
 end
 
- always @(*) begin
-    rgb_pixel = array[(rgb_index)*32 +: 24];
-end
+ 
   
   genvar j;
 generate
