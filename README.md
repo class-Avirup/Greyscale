@@ -1,258 +1,191 @@
-# Greyscale
-A greyscaling unit design with a MIPS processor(ISA architecture) [verilog code and documentation]
+## Greyscale Processor – MIPS-Based Load/Store Architecture
+## 📌 Overview
 
+This project implements a custom **MIPS-based processor in Verilog**, designed specifically for grayscale image processing. The architecture supports only **LOAD** and **STORE** instructions to minimize hardware complexity and is ideal for embedded systems where pixel-level memory manipulation is key.
 
-Starting with the documentation first we need to understand the basics of MIPS architecture(with the neccessary basics of Computer Architecture as well)
+---
 
-What is MIPS?
+## 🧠 1. What is MIPS?
 
-MIPS (Microprocessor without Interlocked Pipeline Stages) is a RISC-based processor architecture developed in the early 1980s. It’s known for its simplicity, performance, and modularity, making it a popular choice in academic environments and embedded systems.
-Instruction Size: 32 bits (fixed)
+**MIPS (Microprocessor without Interlocked Pipeline Stages)** is a classic RISC-based architecture that is:
 
-Registers: 32 General Purpose Registers (GPRs), each 32-bit wide
-Memory Access: Through lw (load word), sw (store word)
+- Simple and modular
+- Widely used in academic and embedded environments
+- Based on fixed 32-bit instruction size
 
-Instruction Types:
+**Instruction Types:**
 
-R-type: Register-based (e.g., add, sub) 
+- **R-Type** – Register operations (e.g., `add`, `sub`)
+- **I-Type** – Immediate or memory instructions (e.g., `lw`, `addi`)
+- **J-Type** – Jump instructions (e.g., `j`, `jal`)
 
-I-type: Immediate or memory (e.g., lw, addi)
+---
+![Screenshot 2025-06-29 113125](https://github.com/user-attachments/assets/1e0ef67f-0ee0-49b7-9e20-64993f887b3f)
 
-J-type: Jump (e.g., j, jal)
+## 🧩 2. MIPS 5-Stage Pipeline
 
-OKAY now coming to the stages of MIPS processor-HERE is an elaborated discussion about it:-
+The classic MIPS processor is divided into 5 pipeline stages:
 
-![nternal-Architecture-of-the-Pipelined-MIPS-5-Stages](https://github.com/user-attachments/assets/e820197c-a707-41a6-bb46-89776164d851)
+### Instruction Fetch (IF)
 
-1. IF – Instruction Fetch
-Goal: Fetch the next instruction from memory
+- Fetch instruction from memory
+- `IR = Mem[PC]`, then `PC = PC + 4`
 
-Inputs: Program Counter (PC)
+### Instruction Decode (ID)
 
-Outputs: Instruction (IR), updated PC
+- Decode opcode, register fields
+- Read registers
+- Sign-extend immediate
 
-Typical operations:
+### Execute (EX)
 
-IR = Mem[PC]
+- ALU performs operation or address calculation
 
-PC = PC + 4
-(📦 Happens in the Instruction Memory.)
+### Memory Access (MEM)
 
-        
-2. ID – Instruction Decode and Register Fetch
+- Access memory (`lw`/`sw`)
 
-Goal: Decode the instruction and fetch operands from registers
+### Write Back (WB)
 
-Inputs: Instruction (IR)
+- Write result back to register
 
-Outputs: Control signals, Read Data 1, Read Data 2, Sign-extended immediate
+![1_3Vz0lKtZR7c8l6YXRwUGDA](https://github.com/user-attachments/assets/e897b5d8-a36a-4e8e-96aa-03d494feaf6a)
 
-Typical operations:
+## 3. Our Custom Minimalist MIPS Processor
 
-Decode opcode, rs, rt, rd
+This design removes non-essential logic and focuses on just two instructions:
 
-Read registers: ReadData1 = Reg[rs], ReadData2 = Reg[rt]
+- `LOAD` (opcode = 1)
+- `STORE` (opcode = 0)
 
-Sign-extend immediate if needed
+### Key Features:
 
-🧠 Happens in the Control Unit, Register File, and Sign-Extend Unit.
+- Reduced components and logic gates
+- No need for ALU control or branch logic
+- Minimal instruction format
+- Fewer clock cycles per instruction
 
+---
 
-3. EX – Execute / Address Calculation
-Goal: Perform ALU operation or calculate memory address
+## 🧱 4. Components Used
 
-Inputs: Operands, ALU control signals
+- Program Counter (PC)
+- Instruction Memory
+- General Purpose Registers
+- Data Memory (RAM)
+- ALU (supports only addition)
+- Sign Extend Unit
+- Multiplexers (x3)
+- Control Unit (1-bit opcode)
+- Sequence Controller
 
-Outputs: ALU Result, Zero flag (for branches), calculated address
+![Screenshot 2025-06-29 120015](https://github.com/user-attachments/assets/beff74f3-0353-4519-b60b-4c11f69cdd59)
+[31]        => Opcode (1-bit)
+[30:26]     => Source Register (rs)
+[25:24]     => (Removed - not needed)
+[23:16]     => Target Register (rt)
+[15:0]      => 16-bit Immediate (offset)
+**Example Hex Instruction:** `80010041`
 
-Typical operations:
+**Binary Representation:** `10000000_00000001_00000000_01000001`
 
-Arithmetic/logic: ALUResult = A op B
+---
 
-Branch: BranchTarget = PC + (Immediate << 2)
+## ⏱️ 6. Instruction Execution Flow
 
-🔧 Happens in the ALU and branch decision logic.
+**LOAD Instruction Flow:**
 
+```
+pgsql
+Copy code
+FETCH → DECODE → READ → WRITEBACK → FETCH
 
-4. MEM – Memory Access
-Goal: Access memory if it's a load (lw) or store (sw) instruction
+```
 
-Inputs: ALU result (address), write data (if storing), control signals
+**STORE Instruction Flow:**
 
-Outputs: Read data from memory or write confirmation
+```
+pgsql
+Copy code
+FETCH → DECODE → WRITE → FETCH
 
-Typical operations:
+```
 
-lw: ReadData = Mem[ALUResult]
+---
+![Screenshot 2025-06-29 113357](https://github.com/user-attachments/assets/89c12128-f69a-428e-9f16-4342e5c7264b)
 
-sw: Mem[ALUResult] = WriteData
+## ⚙️ 7. Step-by-Step Operation
 
-📦 Happens in the Data Memory module.
+<details>
+<summary><strong>Instruction Fetch (IF)</strong></summary>
 
+- Program Counter sends address to Instruction Memory
+- Instruction is fetched and loaded into Instruction Register
+- PC is incremented by 4
 
-5. WB – Write Back
-Goal: Write the result back to a register (if needed)
+</details>
+<details>
+<summary><strong>Instruction Decode (ID)</strong></summary>
 
-Inputs: Data from ALU or Memory
+- Decode `rs`, `rt`, and offset
+- Fetch values from register file
+- Sign-extend offset
 
-Outputs: Register File updated
+</details>
+<details>
+<summary><strong>Execute / Address Calculation</strong></summary>
 
-Typical operations:
+- ALU calculates:
+    
+    `Effective Address = Reg[rs] + SignExtend(offset)`
+    
 
-Reg[rd] = ALUResult (R-type)
+</details>
+<details>
+<summary><strong>Memory Access – LOAD</strong></summary>
 
-Reg[rt] = MemData (I-type load)
+- Memory is accessed using the calculated address
+- Value is routed via multiplexer to register writeback
 
-💾 Happens in the Register File.
+</details>
+<details>
+<summary><strong>Memory Access – STORE</strong></summary>
 
- HERE is the full fledged Diagram of the MIPS Processor-![Screenshot 2025-06-29 113125](https://github.com/user-attachments/assets/2981af8c-52ad-495a-85bb-dd84ca370ef3)
- There are many operation of this processor mainly divided into 
- -R type,J type,I type and hence there are lots of different instruction set.Large numbers of instruction set leads to large number of multiplexer logic 
-![Screenshot 2025-06-29 113357](https://github.com/user-attachments/assets/cd6ca211-f4d1-4347-b761-9da1b3f28bad)
+- Value from `Reg[rt]` is written to memory at calculated address
 
- THE TOTAL COMPONENTS IN THE GIVEN PROCESSOR ARE-
- Register (8)
-,Multiplexor (10)
-,Random Access Memory (1)
-,Sign Extend Module (8)
-,Register File (1)
-,Shift Module (1)
-,Concatenate Module (1)
-,Arithmetic Logic Unit (1)
-,Arithmetic Logic Unit Controller (1)
-,Sequence Controller (1) 
+</details>
+<details>
+<summary><strong>Write Back (for LOAD only)</strong></summary>
 
-For our purpose we were working on a module which works on LOAD and STORE operations only.We did not need other commands and hence extra components.Hence we designed a Processor which works on  Reduced Instruction Set Computer Architecture-
-![image](https://github.com/user-attachments/assets/b379c2d2-2846-4864-b49f-863a35b0929b)
+- Data from memory is written to target register (`rt`)
 
-Here are the main Takeaways
-1)REDUCED COMPONENTS(dedicated for LOAD and STORE operations only)
+</details>
 
-Its consists of
+## 🧮 8. Optimizations
 
-Program Counter
-,Instrution Memory
-,Random Access Memory
-,Sign Extend Module
-,General Purpose Registers
-,Arithmetic Logic Unit(minimal set of operation no need of ALU controller)
-,Sequence controller(with 1 bit opcode judgement-LOAD or STORE)
-,Multiplexer(3)
+- **Only 1-bit opcode** (LOAD = 1, STORE = 0)
+- **Bits [25:24] removed** – not required for 64-pixel test
+- Supports:
+    - Up to 256 registers via 8-bit `rt`
+    - 65,536 memory locations using 16-bit offset
 
-2)REDUCED INSTRUCTION SET
-As there are just two instructions we are using only 1 bit
-opcode(1)-LOAD
-opcode(0)-STORE
+---
 
-80010041 is sample instruction 
+## 🎯 9. Target Application – Grayscale Processing
 
-generally when rs is 00000 for LOAD msb for instruction is 8 and STORE msb is 0
+This processor design is intended for use with a grayscale image unit, where only memory read/write operations are needed to process pixel data. It can be extended or integrated with an image-processing pipeline on an FPGA or ASIC.
 
-This is the binary representation  1000 0000 0000 0001 0000 0000 0100 0001 
+---
 
-opcode-instruction[31]
+## 📁 10. Repository Structure
 
-rs-instruction[30:26]
+- `verilog/` – Core hardware modules (Processor, ALU, etc.)
+- `testbenches/` – Test files and simulation benches
+- `docs/` – Architecture diagrams and block references
+- `image_mem/` – Sample memory files for 64-pixel image
 
-rt-instruction[23:16]
+---
 
-imm-instruction[15:0]
+## 📝 11. Summary
 
-3)REDUCED CYCLES
-
-FOR READ INSTRUCTION- FETCH->DECODE->READ->WRITEBACK->FETCH
-
-FOR WRITE INSTRUCTION- FETCH->DECODE->WRITE->FETCH
-(no need of execute cycle: working add instruction of ALU only)
-
-
-WORKING of LOAD and STORE instructions:
-
-
-
-🔄 Execution Flow for lw and sw
-We’ll break it down by datapath stages:
-
-
-
-
-🔹 1. Instruction Fetch (IF)
-The PC sends the address to Instruction Memory.
-
-The fetched instruction (lw or sw) goes to the Instruction Register.
-
-PC is incremented (PC = PC + 4) using the adder for next instruction.
-
-📦 Affected Units:
-
-PC, Instruction Memory, Adder (+4)
-
-🔹 2. Instruction Decode / Register Fetch (ID)
-rs and rt fields are decoded.
-
-Register values Read data 1 (rs) and Read data 2 (rt) are read from the Register File.
-
-The immediate (offset) is sign-extended to 32 bits for address calculation.
-
-📦 Affected Units:
-
-Registers, Sign-extend block
-
-🔹 3. Execution / Address Calculation (EX)
-The ALU calculates:
-Effective Address = Register[rs] + Sign-extended(offset)
-
-The ALUSrc control signal selects between rt and the immediate for ALU operand 2 (set to use immediate in lw/sw).
-
-📦 Affected Units:
-
-ALU, Mux1 (selects between reg and immediate), Control Unit
-
-🔹 4A. Memory Access – Load Word (lw)
-The effective address goes to Data Memory.
-
-The control signal MemRead is enabled.
-
-Memory[Effective Address] is read and goes to the Mux before the Write-back stage.
-
-📦 Affected Units:
-
-Data Memory (read mode), Mux0, MemRead
-
-🔹 4B. Memory Access – Store Word (sw)
-The effective address goes to Data Memory.
-
-Read data 2 (i.e., rt value) is sent as the data to store.
-
-The control signal MemWrite is enabled.
-
-📦 Affected Units:
-
-Data Memory (write mode), MemWrite
-
-🔹 5. Write Back (Only for lw)
-The data read from memory is sent through Mux0.
-
-Mux0 selects this data (controlled by MemtoReg).
-
-The data is written to rt in the Register File.
-
-RegWrite signal is enabled.
-
-📦 Affected Units:
-
-Register File, Mux0, RegWrite
-
-
-Modifications We made to make it work:
-opcode-instruction[31]
-
-rs-instruction[30:26]
-
-rt-instruction[23:16]
-
-imm-instruction[15:0]
-
-We removed some 2 bits (24 & 25 ) as it is not required for 64 pixeled image we are testing for.The user may add it purposefuly and make the changes in the register section of the processor code
-it can select 2^8=256 register selections.And 2^16(offset+rs) registers select in the memory file.
-
+This project demonstrates a stripped-down, efficient version of a MIPS processor tailored for a specific embedded task—**image data handling through LOAD/STORE instructions**. The custom design highlights how reducing instruction sets and pipeline stages can lead to a practical processor for grayscale computation, without unnecessary control logic or complex datapaths.
