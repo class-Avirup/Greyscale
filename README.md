@@ -96,8 +96,7 @@ This design removes non-essential logic and focuses on just two instructions:
 **LOAD Instruction Flow:**
 
 ```
-pgsql
-Copy code
+
 FETCH → DECODE → READ → WRITEBACK → FETCH
 
 ```
@@ -105,8 +104,7 @@ FETCH → DECODE → READ → WRITEBACK → FETCH
 **STORE Instruction Flow:**
 
 ```
-pgsql
-Copy code
+
 FETCH → DECODE → WRITE → FETCH
 
 ```
@@ -173,19 +171,12 @@ FETCH → DECODE → WRITE → FETCH
 
 ## 🎯 9. Target Application – Grayscale Processing
 
-This processor design is intended for use with a grayscale image unit, where only memory read/write operations are needed to process pixel data. It can be extended or integrated with an image-processing pipeline on an FPGA or ASIC.
+This processor design is intended for use with a grayscale image unit, where only memory read/write operations are needed to process pixel data. It is extended or integrated with an image-processing pipeline on an FPGA or ASIC.
 
 ---
 
-## 📁 10. Repository Structure
 
-- `verilog/` – Core hardware modules (Processor, ALU, etc.)
-- `testbenches/` – Test files and simulation benches
-- `docs/` – Architecture diagrams and block references
-- `image_mem/` – Sample memory files for 64-pixel image
 
----
-
-## 📝 11. Summary
+## 📝 10. Summary
 
 This project demonstrates a stripped-down, efficient version of a MIPS processor tailored for a specific embedded task—**image data handling through LOAD/STORE instructions**. The custom design highlights how reducing instruction sets and pipeline stages can lead to a practical processor for grayscale computation, without unnecessary control logic or complex datapaths.
